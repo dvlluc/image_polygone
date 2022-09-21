@@ -49,12 +49,13 @@
             :key="index"
             :ref="item.itemRef"
             @dragmove="moveCoordinate(index, $event)"
+            @mouseover="makeMainPoint(index)"
           ></v-circle>
         </v-layer>
       </v-stage>
     </div>
     <!-- //!!!!!! -->
-    <h1 v-if="isCrossing">!!!</h1>
+    <h1>{{ startingPolygonePoint.x }} : {{ startingPolygonePoint.y }}</h1>
     <div
       v-for="(item, index) in configCircleCoordinates"
       :style="{ background: `${item.fill}`, color: 'white', width: '500px' }"
@@ -78,10 +79,12 @@
 
 <script>
 // eslint-disable-next-line no-unused-vars
-const width = window.innerWidth;
+// const width = window.innerWidth;
+const width = 500;
 
 // eslint-disable-next-line no-unused-vars
-const height = window.innerHeight;
+// const height = window.innerHeight;
+const height = 500;
 
 export default {
   data() {
@@ -90,48 +93,58 @@ export default {
         width: 500,
         height: 500,
       },
-      confXY: {
-        x: 0,
-        y: 0,
-        radius: 10,
-        fill: "white",
-      },
       configCircleCoordinates: [
         {
-          itemRef: "circle0",
           x: 30,
           y: 30,
           radius: 20,
           fill: "brown",
           draggable: true,
-          dragBoundFunc: null,
+          dragBoundFunc: function (pos) {
+            return {
+              x: Math.min(width, Math.max(0, pos.x)),
+              y: Math.min(height, Math.max(0, pos.y)),
+            };
+          },
         },
         {
-          itemRef: "circle1",
           x: 30,
           y: 480,
           radius: 20,
           fill: "green",
           draggable: true,
-          dragBoundFunc: null,
+          dragBoundFunc: function (pos) {
+            return {
+              x: Math.min(width, Math.max(0, pos.x)),
+              y: Math.min(height, Math.max(0, pos.y)),
+            };
+          },
         },
         {
-          itemRef: "circle2",
           x: 480,
           y: 480,
           radius: 20,
           fill: "yellow",
           draggable: true,
-          dragBoundFunc: null,
+          dragBoundFunc: function (pos) {
+            return {
+              x: Math.min(width, Math.max(0, pos.x)),
+              y: Math.min(height, Math.max(0, pos.y)),
+            };
+          },
         },
         {
-          itemRef: "circle3",
           x: 480,
           y: 30,
           radius: 20,
           fill: "blue",
           draggable: true,
-          dragBoundFunc: null,
+          dragBoundFunc: function (pos) {
+            return {
+              x: Math.min(width, Math.max(0, pos.x)),
+              y: Math.min(height, Math.max(0, pos.y)),
+            };
+          },
         },
       ],
       polygoneCoordinates: [30, 30, 30, 480, 480, 480, 480, 30],
@@ -139,7 +152,7 @@ export default {
       text: "0",
 
       positionPolygone: [30, 30, 30, 480, 480, 480, 480, 30],
-      isCrossing: false,
+      crossingNumber: 0,
 
       startingPolygonePoint: {
         x: 0,
@@ -155,19 +168,49 @@ export default {
     image.onload = () => {
       this.image = image;
     };
-    // ! прописываем ограничивающую полем логику для вершин полегона
-    // this.configCircleCoordinates = this.configCircleCoordinates.map((el) => {
-    //   el.dragBoundFunc = () =>
-    //     function (pos) {
-    //       return {
-    //         x: Math.min(500, Math.max(0, pos.x)),
-    //         y: Math.min(500, Math.max(0, pos.y)),
-    //       };
-    //     };
-    //   return el;
-    // });
   },
   methods: {
+    makeMainPoint(index) {
+      if (index === 1) {
+        const b = [
+          this.configCircleCoordinates[1],
+          this.configCircleCoordinates[2],
+          this.configCircleCoordinates[3],
+          this.configCircleCoordinates[0],
+        ];
+        this.configCircleCoordinates = [...b];
+      } else if (index === 2) {
+        const b = [
+          this.configCircleCoordinates[2],
+          this.configCircleCoordinates[3],
+          this.configCircleCoordinates[0],
+          this.configCircleCoordinates[1],
+        ];
+        this.configCircleCoordinates = [...b];
+      } else if (index === 3) {
+        const b = [
+          this.configCircleCoordinates[3],
+          this.configCircleCoordinates[0],
+          this.configCircleCoordinates[1],
+          this.configCircleCoordinates[2],
+        ];
+        this.configCircleCoordinates = [...b];
+      }
+
+      this.polygoneCoordinates = this.configCircleCoordinates.reduce(
+        (acc, curr) => {
+          acc = [
+            ...acc,
+            ...[
+              +curr.x - this.startingPolygonePoint.x,
+              +curr.y - this.startingPolygonePoint.y,
+            ],
+          ];
+          return acc;
+        },
+        []
+      );
+    },
     changeX(index, event) {
       this.configCircleCoordinates[index].x = +event.target.value;
       //! для полегона надо учитывать смещение начала координат
@@ -205,13 +248,17 @@ export default {
       v2 = this.VEK(p4.x - p3.x, p4.y - p3.y, p2.x - p3.x, p2.y - p3.y);
       v3 = this.VEK(p2.x - p1.x, p2.y - p1.y, p3.x - p1.x, p3.y - p1.y);
       v4 = this.VEK(p2.x - p1.x, p2.y - p1.y, p4.x - p1.x, p4.y - p1.y);
-      if (v1 * v2 < 0 && v3 * v4 < 0) return true;
+
+      if ((v1 * v2 < 0 && v3 * v4 < 0) || (v1 * v4 < 0 && v2 * v3 < 0))
+        return true;
       else return false;
     },
 
     moveCoordinate(index, event) {
       let x = event.target.attrs.x;
       let y = event.target.attrs.y;
+
+      this.currentCoordinate = { x, y };
 
       this.configCircleCoordinates[index].x = x;
       this.configCircleCoordinates[index].y = y;
@@ -220,30 +267,34 @@ export default {
       this.polygoneCoordinates[2 * index] = x - this.startingPolygonePoint.x;
       this.polygoneCoordinates[2 * index + 1] =
         y - this.startingPolygonePoint.y;
-      const points = this.configCircleCoordinates;
+      const p = this.configCircleCoordinates;
 
-      // обход по часовой стрелке
-      const bypassClockwise = this.crossingCheck(
-        points[0],
-        points[3],
-        points[2],
-        points[1]
-      );
+      let isCrossing = this.crossingCheck(p[0], p[1], p[2], p[3]);
 
-      // обход против часовой стрелке
-      const bypassCounterclockwise = this.crossingCheck(
-        points[0],
-        points[1],
-        points[2],
-        points[3]
-      );
-
-      this.isCrossing = bypassClockwise | bypassCounterclockwise;
-
-      if (this.isCrossing) {
-        // перерэндер узлов
-        // перерэндер полигона
+      if (isCrossing) {
+        if (!this.crossingCheck(p[0], p[2], p[1], p[3])) {
+          const a = [p[0], p[2], p[1], p[3]];
+          this.configCircleCoordinates = [...a];
+        } else if (!this.crossingCheck(p[0], p[2], p[3], p[1])) {
+          const a = [p[0], p[2], p[3], p[1]];
+          this.configCircleCoordinates = [...a];
+        }
       }
+
+      this.polygoneCoordinates = this.configCircleCoordinates.reduce(
+        (acc, curr) => {
+          acc = [
+            ...acc,
+            ...[
+              +curr.x - this.startingPolygonePoint.x,
+              +curr.y - this.startingPolygonePoint.y,
+            ],
+          ];
+          return acc;
+        },
+        []
+      );
+      isCrossing = false;
     },
 
     dragAndDropCoordinates(event) {
