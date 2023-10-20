@@ -51,7 +51,6 @@
         </v-layer>
       </v-stage>
     </div>
-    <!-- //!!!!!! -->
     <h1>{{ startingPolygonePoint.x }} : {{ startingPolygonePoint.y }}</h1>
     <div
       v-for="(item, index) in configCircleCoordinates"
@@ -95,7 +94,7 @@ export default {
           radius: 20,
           fill: "brown",
           draggable: true,
-          dragBoundFunc: function (pos) {
+          dragBoundFunc(pos) {
             return {
               x: Math.min(width, Math.max(0, pos.x)),
               y: Math.min(height, Math.max(0, pos.y)),
@@ -108,7 +107,7 @@ export default {
           radius: 20,
           fill: "green",
           draggable: true,
-          dragBoundFunc: function (pos) {
+          dragBoundFunc(pos) {
             return {
               x: Math.min(width, Math.max(0, pos.x)),
               y: Math.min(height, Math.max(0, pos.y)),
@@ -121,7 +120,7 @@ export default {
           radius: 20,
           fill: "yellow",
           draggable: true,
-          dragBoundFunc: function (pos) {
+          dragBoundFunc(pos) {
             return {
               x: Math.min(width, Math.max(0, pos.x)),
               y: Math.min(height, Math.max(0, pos.y)),
@@ -134,7 +133,7 @@ export default {
           radius: 20,
           fill: "blue",
           draggable: true,
-          dragBoundFunc: function (pos) {
+          dragBoundFunc(pos) {
             return {
               x: Math.min(width, Math.max(0, pos.x)),
               y: Math.min(height, Math.max(0, pos.y)),
@@ -196,14 +195,11 @@ export default {
       }
       this.polygoneCoordinates = this.configCircleCoordinates.reduce(
         (acc, curr) => {
-          acc = [
+          return [
             ...acc,
-            ...[
-              +curr.x - this.startingPolygonePoint.x,
-              +curr.y - this.startingPolygonePoint.y,
-            ],
+            +curr.x - this.startingPolygonePoint.x,
+            +curr.y - this.startingPolygonePoint.y,
           ];
-          return acc;
         },
         []
       );
@@ -211,13 +207,13 @@ export default {
 
     changeX(index, event) {
       this.configCircleCoordinates[index].x = +event.target.value;
-      //! для полегона надо учитывать смещение начала координат
+      //! для полигона надо учитывать смещение начала координат
       this.polygoneCoordinates[2 * index] =
         +event.target.value - this.startingPolygonePoint.x;
     },
     changeY(index, event) {
       this.configCircleCoordinates[index].y = +event.target.value;
-      //! для полегона надо учитывать смещение начала координат
+      //! для полигона надо учитывать смещение начала координат
       this.polygoneCoordinates[2 * index + 1] =
         +event.target.value - this.startingPolygonePoint.y;
     },
@@ -238,14 +234,15 @@ export default {
       p3,
       p4 //проверка пересечения
     ) {
-      let v1, v2, v3, v4;
+      let v1;
+      let v2;
+      let v3;
+      let v4;
       v1 = this.VEK(p4.x - p3.x, p4.y - p3.y, p1.x - p3.x, p1.y - p3.y);
       v2 = this.VEK(p4.x - p3.x, p4.y - p3.y, p2.x - p3.x, p2.y - p3.y);
       v3 = this.VEK(p2.x - p1.x, p2.y - p1.y, p3.x - p1.x, p3.y - p1.y);
       v4 = this.VEK(p2.x - p1.x, p2.y - p1.y, p4.x - p1.x, p4.y - p1.y);
-      if ((v1 * v2 < 0 && v3 * v4 < 0) || (v1 * v4 < 0 && v2 * v3 < 0))
-        return true;
-      else return false;
+      return (v1 * v2 < 0 && v3 * v4 < 0) || (v1 * v4 < 0 && v2 * v3 < 0);
     },
 
     saveCoordinatesBeforeDrug() {
@@ -257,42 +254,38 @@ export default {
     },
 
     checkCoordinatesAfterDrug() {
-      let maxX, maxY, minX, minY;
-      const xList = [],
-        yList = [];
+      const xList = [];
+      const yList = [];
 
       this.configCircleCoordinates.forEach((el) => {
         xList.push(el.x);
         yList.push(el.y);
       });
 
-      maxX = this.getMaxOfArray(xList);
-      maxY = this.getMaxOfArray(yList);
-      minX = this.getMinOfArray(xList);
-      minY = this.getMinOfArray(yList);
+      const maxX = this.getMaxOfArray(xList);
+      const maxY = this.getMaxOfArray(yList);
+      const minX = this.getMinOfArray(xList);
+      const minY = this.getMinOfArray(yList);
 
       const checkX = ((maxX - minX) / width) * 100;
       const checkY = ((maxY - minY) / height) * 100;
 
-      if (checkX < 10 || checkY < 10) {
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        this.configCircleCoordinates[0].x = this.startingCirclePoint.x;
-        this.configCircleCoordinates[0].y = this.startingCirclePoint.y;
-
-        this.polygoneCoordinates = this.configCircleCoordinates.reduce(
-          (acc, curr) => {
-            acc = [
-              ...acc,
-              ...[
-                +curr.x - this.startingPolygonePoint.x,
-                +curr.y - this.startingPolygonePoint.y,
-              ],
-            ];
-            return acc;
-          },
-          []
-        );
+      if (!(checkX < 10 || checkY < 10)) {
+        return;
       }
+      this.configCircleCoordinates[0].x = this.startingCirclePoint.x;
+      this.configCircleCoordinates[0].y = this.startingCirclePoint.y;
+
+      this.polygoneCoordinates = this.configCircleCoordinates.reduce(
+        (acc, curr) => {
+          return [
+            ...acc,
+            +curr.x - this.startingPolygonePoint.x,
+            +curr.y - this.startingPolygonePoint.y,
+          ];
+        },
+        []
+      );
     },
     getMaxOfArray(numArray) {
       return Math.max.apply(null, numArray);
@@ -302,12 +295,11 @@ export default {
     },
 
     moveCoordinate(index, event) {
-      let x = event.target.attrs.x;
-      let y = event.target.attrs.y;
+      const { x, y } = event.target.attrs;
       this.currentCoordinate = { x, y };
       this.configCircleCoordinates[index].x = x;
       this.configCircleCoordinates[index].y = y;
-      //! для полегона надо учитывать смещение начала координат
+      //! для полигона надо учитывать смещение начала координат
       this.polygoneCoordinates[2 * index] = x - this.startingPolygonePoint.x;
       this.polygoneCoordinates[2 * index + 1] =
         y - this.startingPolygonePoint.y;
@@ -324,39 +316,31 @@ export default {
       }
       this.polygoneCoordinates = this.configCircleCoordinates.reduce(
         (acc, curr) => {
-          acc = [
+          return [
             ...acc,
-            ...[
-              +curr.x - this.startingPolygonePoint.x,
-              +curr.y - this.startingPolygonePoint.y,
-            ],
+            +curr.x - this.startingPolygonePoint.x,
+            +curr.y - this.startingPolygonePoint.y,
           ];
-          return acc;
         },
         []
       );
       isCrossing = false;
     },
     dragAndDropCoordinates(event) {
-      this.startingPolygonePoint.x = event.target.attrs.x;
-      this.startingPolygonePoint.y = event.target.attrs.y;
+      const { x, y } = event.target.attrs;
+      this.startingPolygonePoint.x = x;
+      this.startingPolygonePoint.y = y;
 
-      this.configCircleCoordinates[0].x =
-        this.positionPolygone[0] + event.target.attrs.x;
-      this.configCircleCoordinates[0].y =
-        this.positionPolygone[1] + event.target.attrs.y;
-      this.configCircleCoordinates[1].x =
-        this.positionPolygone[2] + event.target.attrs.x;
-      this.configCircleCoordinates[1].y =
-        this.positionPolygone[3] + event.target.attrs.y;
-      this.configCircleCoordinates[2].x =
-        this.positionPolygone[4] + event.target.attrs.x;
-      this.configCircleCoordinates[2].y =
-        this.positionPolygone[5] + event.target.attrs.y;
-      this.configCircleCoordinates[3].x =
-        this.positionPolygone[6] + event.target.attrs.x;
-      this.configCircleCoordinates[3].y =
-        this.positionPolygone[7] + event.target.attrs.y;
+      
+
+      this.configCircleCoordinates[0].x = this.positionPolygone[0] + x;
+      this.configCircleCoordinates[0].y = this.positionPolygone[1] + y;
+      this.configCircleCoordinates[1].x = this.positionPolygone[2] + x;
+      this.configCircleCoordinates[1].y = this.positionPolygone[3] + y;
+      this.configCircleCoordinates[2].x = this.positionPolygone[4] + x;
+      this.configCircleCoordinates[2].y = this.positionPolygone[5] + y;
+      this.configCircleCoordinates[3].x = this.positionPolygone[6] + x;
+      this.configCircleCoordinates[3].y = this.positionPolygone[7] + y;
     },
   },
 };
