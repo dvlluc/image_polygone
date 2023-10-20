@@ -20,7 +20,7 @@
               fill: '',
               stroke: 'red',
               draggable: true,
-              dragBoundFunc: function (pos) {
+              dragBoundFunc: (pos) => {
                 const selfRect = $refs.polygone.getStage().getSelfRect();
                 const minX = -selfRect.x;
                 const maxX =
@@ -326,12 +326,10 @@ export default {
       );
       isCrossing = false;
     },
-    dragAndDropCoordinates(event) {
+    dragAndDropCoordinates2(event) {
       const { x, y } = event.target.attrs;
       this.startingPolygonePoint.x = x;
       this.startingPolygonePoint.y = y;
-
-      
 
       this.configCircleCoordinates[0].x = this.positionPolygone[0] + x;
       this.configCircleCoordinates[0].y = this.positionPolygone[1] + y;
@@ -341,6 +339,21 @@ export default {
       this.configCircleCoordinates[2].y = this.positionPolygone[5] + y;
       this.configCircleCoordinates[3].x = this.positionPolygone[6] + x;
       this.configCircleCoordinates[3].y = this.positionPolygone[7] + y;
+    },
+    dragAndDropCoordinates(event) {
+      const { x, y } = event.target.attrs;
+      this.startingPolygonePoint.x = x;
+      this.startingPolygonePoint.y = y;
+
+      this.configCircleCoordinates.forEach((_, index) => {
+        this.configCircleCoordinates[index] = Object.assign(
+          this.configCircleCoordinates[index],
+          {
+            x: this.positionPolygone[2 * index] + x,
+            y: this.positionPolygone[2 * index + 1] + y,
+          }
+        );
+      });
     },
   },
 };
